@@ -1,34 +1,65 @@
 /*
-  Mapa id do exercício (índice no array EX do app) -> arquivo dentro de exercicios/
-  Gerado automaticamente por gerar_manifest.py e REVISADO manualmente:
-  só entraram aqui os 25 pares em que o nome do arquivo bate com o exercício.
-  Os outros 39 exercícios (sem gif ou com gif duvidoso) estão listados em
-  revisar-manualmente.md — dá uma olhada lá antes de subir pra produção.
+  Mapa id do exercício (índice no array EX do app) -> arquivo na raiz do repo.
+  54 de 64 exercícios já têm gif. Os 10 que faltam estão listados no final
+  deste comentário — não achei arquivo correspondente nos 711 que você mandou.
+
+  Sem gif ainda: Chin-up (Pegada Supinada) · Push Press · Prancha Abdominal ·
+  Prancha Lateral · Elevação de Pernas · Abdominal na Polia Alta ·
+  Russian Twist · Dead Bug · Mountain Climbers · Elevação de Joelhos na Barra
 */
 window.GIFS = {
+  "0":  "peitoral-supino.webp",
   "1":  "peitoral-supino-inclinado-com-halteres.webp",
   "2":  "peitoral-supino-com-barra-declinado.webp",
   "3":  "peitoral-crucifixo-com-halteres.webp",
   "4":  "peitoral-crucifixo-deitado-com-cabo.webp",
+  "5":  "triceps-flexao-de-apoio-com-elevao-de-brao.webp",
   "6":  "peitoral-voador-no-pec-deck.webp",
   "7":  "peitoral-pullover-com-haltere.webp",
+  "8":  "costas-puxada-alta.webp",
+  "9":  "costas-puxada-alta-na-polia-nuca.webp",
   "10": "costas-remada-curvada-com-barra.webp",
+  "11": "costas-serrote.webp",
+  "12": "costas-remada-inclinada-no-banco-com-cabo.webp",
   "13": "costas-remada-sentada-na-maquina.webp",
   "14": "costas-levantamento-terra.webp",
   "15": "costas-barra-fixa.webp",
   "17": "trapezio-face-pull.webp",
+  "18": "quadriceps-agachamento.webp",
   "19": "quadriceps-agachamento-frontal.webp",
   "20": "quadriceps-leg-press.webp",
+  "21": "quadriceps-afundo-com-halteres.webp",
   "22": "quadriceps-cadeira-extensora.webp",
   "23": "posterior-de-pernas-mesa-flexora.webp",
   "24": "costas-levantamento-terra-romeno.webp",
   "25": "panturrilhas-elevacao-de-panturrilha-com-barra-em-p.webp",
   "26": "panturrilhas-elevacao-de-panturrilha-sentado-com-peso.webp",
+  "27": "quadriceps-agachamento-blgaro-com-halteres.webp",
+  "28": "quadriceps-agachamento-na-maquina-hack.webp",
+  "29": "gluteos-levantamento-terra-sum.webp",
   "30": "ombros-desenvolvimento-militar-com-barra.webp",
+  "31": "ombros-desenvolvimento-de-ombro-no-banco-com-halteres.webp",
+  "32": "ombros-elevacao-lateral-de-braos-com-halteres.webp",
   "33": "ombros-elevacao-frontal-com-halteres.webp",
+  "34": "ombros-crucifixo-inverso-unilateral-com-cabo.webp",
+  "35": "trapezio-encolhimento-de-barra.webp",
+  "36": "ombros-desenvolvimento-arnold.webp",
   "38": "biceps-rosca-direta-com-barra.webp",
+  "39": "biceps-rosca-alternada-com-halteres-sentado.webp",
   "40": "biceps-rosca-martelo.webp",
   "41": "biceps-rosca-no-cabo.webp",
   "42": "biceps-rosca-scott-com-alavanca.webp",
-  "59": "pular-corda.webp"
+  "43": "triceps-triceps-testa-com-barra.webp",
+  "44": "triceps-triceps-pulley-corda.webp",
+  "45": "triceps-triceps-francs-com-halteres.webp",
+  "46": "peitoral-paralelas.webp",
+  "47": "triceps-extensao-de-trceps-com-um-brao.webp",
+  "50": "contrao-abdominal.webp",
+  "57": "cardio-academia-esteira-ergometrica.webp",
+  "58": "cardio-academia-bike.webp",
+  "59": "pular-corda.webp",
+  "60": "burpee-jack.webp",
+  "61": "costas-maquina-de-remo.webp",
+  "62": "cardio-academia-maquina-simulador-escada.webp",
+  "63": "cardio-academia-esteira-com-inclinacao.webp"
 };
