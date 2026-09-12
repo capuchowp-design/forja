@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>FORJA — Planejador e Registro de Treinos</title>
+<meta name="description" content="FORJA — planejador e registro de treinos com demonstrações em vídeo dos exercícios.">
+
+<!-- PWA: permite "Adicionar à tela de início" e abrir em tela cheia, sem a barra do navegador -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0a10">
+<meta name="color-scheme" content="dark">
+
+<!-- iOS: modo standalone (tela cheia) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FORJA">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+
+<!-- Android/Chrome -->
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<style>
+:root{
+  --primary:#8b5cf6; --primary-light:#a78bfa; --primary-dark:#6d28d9;
+  --primary-glow:rgba(139,92,246,.35); --bg:#0a0a10; --bg-2:#0e0e16;
+  --surface:#14141f; --surface-2:#1c1c2b; --border:rgba(255,255,255,.08);
+  --text:#f4f4f8; --muted:#9a9aad; --green:#34d399; --red:#f87171;
+  --amber:#fbbf24; --radius:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+  color:var(--text);background:#06060b;-webkit-font-smoothing:antialiased;
+}
+@media(min-width:560px){
+  body{background:radial-gradient(900px 500px at 50% -10%,rgba(139,92,246,.18),transparent 60%),#06060b}
+}
+.shell{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;
+  box-shadow:0 0 80px rgba(0,0,0,.6)}
+@media(min-width:560px){.shell{border-left:1px solid var(--border);border-right:1px solid var(--border)}}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;color:var(--text)}
+a{color:inherit;text-decoration:none}
+svg{display:block}
+
+/* header */
+.topbar{
+  position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
+  padding:calc(14px + env(safe-area-inset-top)) 18px 14px;background:rgba(10,10,16,.85);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.logo{display:flex;align-items:center;gap:9px;font-weight:900;font-size:1.15rem;letter-spacing:.06em}
+.logo-badge{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));box-shadow:0 4px 16px var(--primary-glow)}
+.top-act{display:flex;gap:8px;align-items:center}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);
+  display:grid;place-items:center;color:var(--muted);transition:.2s}
+.icon-btn:hover{color:var(--primary-light);border-color:var(--primary)}
+
+/* content */
+#view{padding:18px 18px 110px;min-height:70vh;animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.page-title{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
+.page-sub{color:var(--muted);font-size:.88rem;margin-bottom:20px}
+.muted{color:var(--muted)} .small{font-size:.8rem} .tiny{font-size:.72rem}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.card-title{font-weight:800;font-size:.98rem;margin-bottom:6px}
+.row{display:flex;align-items:center;gap:10px}
+.row-between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:12px 20px;border-radius:12px;
+  font-weight:800;font-size:.9rem;transition:transform .15s,box-shadow .2s,background .2s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;
+  box-shadow:0 6px 20px var(--primary-glow)}
+.btn-ghost{background:var(--surface-2);border:1px solid var(--border);color:var(--text)}
+.btn-ghost:hover{border-color:var(--primary)}
+.btn-danger{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.btn-block{width:100%}
+.btn-sm{padding:8px 14px;font-size:.8rem;border-radius:10px}
+.btn-xs{padding:5px 10px;font-size:.72rem;border-radius:8px;font-weight:700}
+
+/* chips & tags */
+.tag{font-size:.66rem;font-weight:800;padding:3px 8px;border-radius:6px;background:rgba(139,92,246,.14);
+  color:var(--primary-light);white-space:nowrap}
+.tag-gray{background:var(--surface-2);color:var(--muted)}
+.chip{padding:8px 14px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);
+  font-size:.8rem;font-weight:700;color:var(--muted);white-space:nowrap;transition:.2s}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.chips-row{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
+.chips-row::-webkit-scrollbar{display:none}
+
+/* inputs */
+.input{width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;
+  font-size:.92rem;outline:none;transition:border .2s}
+.input:focus{border-color:var(--primary)}
+select.input{appearance:none}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+
+/* stat cards */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center}
+.stat .v{font-size:1.35rem;font-weight:800;color:var(--primary-light)}
+.stat .l{font-size:.68rem;color:var(--muted);margin-top:2px;font-weight:600}
+
+/* exercise list */
+.ex-item{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);
+  border:1px solid var(--border);border-radius:14px;margin-bottom:10px;cursor:pointer;transition:border .2s}
+.ex-item:hover{border-color:rgba(139,92,246,.5)}
+.ex-ico{width:38px;height:38px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;
+  background:rgba(139,92,246,.13);color:var(--primary-light)}
+.ex-item .n{font-weight:800;font-size:.88rem}
+.ex-item .m{font-size:.72rem;color:var(--muted);margin-top:2px}
+
+/* routine editor set config */
+.setcfg{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.setcfg .grp{display:flex;align-items:center;gap:6px;background:var(--bg-2);border:1px solid var(--border);
+  border-radius:10px;padding:6px 10px;font-size:.78rem;color:var(--muted)}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper button{width:26px;height:26px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);
+  font-weight:800;color:var(--primary-light);font-size:.9rem;display:grid;place-items:center}
+.stepper b{min-width:26px;text-align:center;font-size:.88rem}
+
+/* active workout */
+.ex-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+.ex-block.done{border-color:rgba(52,211,153,.4)}
+.ex-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.ex-head .n{font-weight:800;font-size:.92rem}
+.ex-head .m{font-size:.7rem;color:var(--muted)}
+.setrow{display:grid;grid-template-columns:34px 1fr 1fr 1fr 40px;gap:6px;align-items:center;margin-bottom:6px}
+.setrow .sn{font-size:.75rem;font-weight:800;color:var(--muted);text-align:center}
+.setrow input{background:var(--bg-2);border:1px solid var(--border);border-radius:9px;padding:9px 6px;
+  font-size:.85rem;font-weight:700;text-align:center;outline:none;width:100%}
+.setrow input:focus{border-color:var(--primary)}
+.setrow input.done{color:var(--green)}
+.checkbtn{height:34px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);
+  display:grid;place-items:center;transition:.2s;color:transparent;font-size:.9rem}
+.checkbtn.on{background:var(--green);border-color:var(--green);color:#06281c;font-weight:900}
+.ex-media{width:100%;border-radius:14px;background:#000;border:1px solid var(--border);margin-bottom:14px;display:block}
+.ex-thumb{width:38px;height:38px;border-radius:11px;object-fit:cover;background:#000;border:1px solid var(--border);flex-shrink:0}
+.prev-hint{font-size:.68rem;color:var(--amber);margin-bottom:8px;font-weight:600}
+
+/* rest timer pill */
+#timerPill{position:fixed;left:50%;transform:translate(-50%,90px);bottom:78px;z-index:80;
+  background:var(--surface-2);border:1px solid var(--primary);border-radius:999px;padding:10px 18px;
+  display:flex;align-items:center;gap:14px;font-weight:800;font-size:.9rem;
+  box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 24px var(--primary-glow);
+  transition:transform .35s cubic-bezier(.2,.9,.3,1.2)}
+#timerPill.show{transform:translate(-50%,0)}
+#timerPill .t{color:var(--primary-light);font-variant-numeric:tabular-nums;min-width:52px;text-align:center}
+
+/* bottom nav */
+.bottomnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:70;
+  display:flex;background:rgba(14,14,22,.92);backdrop-filter:blur(16px);border-top:1px solid var(--border);
+  padding:8px 6px calc(8px + env(safe-area-inset-bottom))}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;
+  color:var(--muted);font-size:.62rem;font-weight:700;border-radius:10px;transition:.2s}
+.nav-item.on{color:var(--primary-light)}
+.nav-item .ind{width:4px;height:4px;border-radius:50%;background:transparent}
+.nav-item.on .ind{background:var(--primary);box-shadow:0 0 8px var(--primary)}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;z-index:100;background:rgba(4,4,8,.7);backdrop-filter:blur(6px);
+  display:flex;align-items:flex-end;justify-content:center;animation:fadein .2s}
+.modal{width:100%;max-width:480px;max-height:85vh;overflow-y:auto;background:var(--surface);
+  border:1px solid var(--border);border-radius:22px 22px 0 0;padding:22px 20px 30px;animation:slideup .3s ease}
+@keyframes slideup{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+.grab{width:40px;height:4px;border-radius:99px;background:var(--border);margin:0 auto 16px}
+
+/* toast */
+#toast{position:fixed;top:18px;left:50%;transform:translate(-50%,-70px);z-index:200;
+  background:var(--surface-2);border:1px solid var(--primary);padding:11px 20px;border-radius:999px;
+  font-size:.82rem;font-weight:800;box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 24px var(--primary-glow);
+  transition:transform .35s cubic-bezier(.2,.9,.3,1.3);pointer-events:none;white-space:nowrap;max-width:92vw}
+#toast.show{transform:translate(-50%,0)}
+
+/* charts */
+.chart{width:100%;height:auto}
+.bar{width:100%;height:auto}
+
+/* empty state */
+.empty{text-align:center;padding:44px 20px;color:var(--muted)}
+.empty .ico{font-size:2.6rem;margin-bottom:12px;opacity:.9}
+
+/* history */
+.hist-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 14px;
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:10px}
+.hist-item .n{font-weight:800;font-size:.88rem}
+.hist-item .d{font-size:.72rem;color:var(--muted);margin-top:2px}
+
+/* summary hero */
+.summary-hero{text-align:center;padding:30px 20px;border-radius:var(--radius);margin-bottom:16px;
+  background:linear-gradient(135deg,rgba(139,92,246,.22),rgba(109,40,217,.08)),var(--surface);
+  border:1px solid rgba(139,92,246,.35)}
+.bigcheck{width:64px;height:64px;border-radius:50%;margin:0 auto 14px;display:grid;place-items:center;
+  background:var(--green);color:#06281c;font-size:1.8rem;font-weight:900;box-shadow:0 0 30px rgba(52,211,153,.4)}
+.pr-banner{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);color:var(--amber);
+  border-radius:12px;padding:10px 14px;font-weight:800;font-size:.82rem;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="logo">
+      <span class="logo-badge"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg></span>
+      FORJA
+    </div>
+    <div class="top-act">
+      <button class="icon-btn" data-action="open-backup" title="Backup"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg></button>
+      <button class="icon-btn" data-action="nav" data-view="home" title="Início"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5"/></svg></button>
+      <input type="file" id="backupFileInput" accept="application/json" style="display:none">
+    </div>
+  </div>
+
+  <div id="view"></div>
+
+  <div id="timerPill">⏱️ Descanso <span class="t" id="timerTxt">1:30</span>
+    <button class="btn btn-primary btn-xs" data-action="timer-skip">Pular</button>
+  </div>
+
+  <nav class="bottomnav" id="bottomNav"></nav>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toast"></div>
+
+<script src="gifs.js"></script>
+<script>
+/* ============================================================
+   FORJA — Workout planner & tracker (single-file app)
+   ============================================================ */
+"use strict";
+const LS_KEY="forja_state_v1";
+
+/* ---------------- EXERCISE DATABASE ---------------- */
+const EX=[
+{n:"Extensão Concentrada com Cabo no Joelho",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Extensão de Punho com Anilha",g:"Braços",eq:"Anilha",sec:"",how:""},
+{n:"Extensão de Punho com Barra",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Extensão de Punho com Barra Sobre o Banco",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Extensão de Tríceps Deitado com Barra W Pegada Fechada Atrás da Cabeça",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Extensão de Tríceps Deitado com Corda",g:"Braços",eq:"Corda",sec:"",how:""},
+{n:"Extensão de Tríceps Invertida com Unilateral",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Extensão de Tríceps Lateral com Cabo",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Extensão de Tríceps Testa Declinado Fechado",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Extensão de Tríceps com Barra Atrás da Cabeça",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Extensão de Tríceps com Barra W Inclinada",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Extensão de Tríceps com Barra em Pé",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Extensão de Tríceps com Cabo Ajoelhado",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Extensão de Tríceps com Cabo Inclinado",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Extensão de Tríceps com Cabo em Posição Ajoelhada",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Extensão de Tríceps com Cabo na Posição Horizontal",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Extensão de Tríceps com Cabos Cruzados",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Extensão de Tríceps com Deitado com Barra",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Extensão de Tríceps com Haltere Unilateral Sentado",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Extensão de Tríceps com Haltere em Pronação com um Braço",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Extensão de Tríceps com Pegada Invertida",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Extensão de Tríceps com um Braço",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Extensão de Tríceps com uma Mão no Pulley Alto Sobre a Cabeça",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Extensão de Tríceps na Máquina",g:"Braços",eq:"Máquina",sec:"",how:""},
+{n:"Extensão de Tríceps na Máquina Pegada Neutra",g:"Braços",eq:"Máquina",sec:"",how:""},
+{n:"Extensão de Tríceps no Cabo Alto",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Extensão de Tríceps no Cabo Deitado",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Flexão de Apoio com Elevação de Braço",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Flexão de Dedo com Barra Atrás das Costas",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Flexão de Punho Pegada Neutra Sentado com Halter",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Flexão de Punho com Barra",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Flexão de Punho com Barra Atrás das Costas",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Flexão de Punho com Halteres",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Flexão de Punho na Polia Unilateral",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Hand Grip",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Mergulho de Tríceps",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Mergulho de Tríceps com Alavanca",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Mergulhos Assistidos para Tríceps",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Máquina de Flexão de Tríceps",g:"Braços",eq:"Máquina",sec:"",how:""},
+{n:"Máquina de Rosca Direta",g:"Braços",eq:"Máquina",sec:"",how:""},
+{n:"Rolinho para Antebrao",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Rosca Alternada com Barra",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Rosca Alternada com Halteres Sentado",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca Banco Inclinado",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Rosca Bilateral com Cabo em Banco Inclinado",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca Bíceps Alta com Halteres",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca Bíceps Inclinada com Cabos",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca Bíceps Inclinada com Halteres Sentado",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca Bíceps Sentado",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Rosca Bíceps Unilateral",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Rosca Bíceps Unilateral com Pegada Invertida em Cabo",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca Bíceps Unilateral no Cabo Alto",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca Bíceps com Cabo Ajoelhado",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca Bíceps com Halteres",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca Bíceps com Pegada Fechada na Barra W",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Rosca Concentrada",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Rosca Concentrada Unilateral com Cabo",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca Concentrada com Cabo",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca Concentrada com Pegada Fechada Sentado",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Rosca Direta com Barra",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Rosca Direta com Barra Deitado em Banco Alto",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Rosca Direta com Barra W",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Rosca Direta com Barra em Pegada Fechada",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Rosca Direta com Barra no Colete Scott",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Rosca Direta com Cabo Deitado",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca Inversa com Barra",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Rosca Inversa com Barra W",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Rosca Inversa com Halteres",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca Martelo",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Rosca Martelo Sentada",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Rosca Martelo com Corda",g:"Braços",eq:"Corda",sec:"",how:""},
+{n:"Rosca Martelo com Halter no Colete Scott",g:"Braços",eq:"Máquina",sec:"",how:""},
+{n:"Rosca Martelo com Halteres no Banco Scott",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca Pronada no Banco Inclinado",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Rosca Scott Alternados com Halteres",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca Scott Unilateral com Halteres",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca Scott com Alavanca",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca Scott com Barra W",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Rosca Scott com Halteres",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca Scott com Halteres Martelo no Banco",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca Spider Unilateral",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Rosca Spider com Único Haltere",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca Unilateral com Cabo",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca Zottman",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Rosca com Barra",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Rosca com Cabo de um Braço",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca com Halteres",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca com Halteres no Colete Scott",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca com Polia Alta",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca de Bíceps com Alavanca",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca de Bíceps com Halteres no Banco Scott",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca de Bíceps com Puxada de Cabo",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Rosca de Dedos com Halteres",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Rosca de Punho Pegada Neutra com Anilhas",g:"Braços",eq:"Anilha",sec:"",how:""},
+{n:"Rosca no Cabo",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Supino Fechado",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Supino Invertido com Pegada Fechada",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Tríceps Coice com Cabo",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Tríceps Coice com Halteres",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Tríceps Francês Alternada com Halteres no Banco Inclinado",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Tríceps Francês Unilateral no Cabo",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Tríceps Francês com Barra W Acima da Cabeça Sentado",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Tríceps Francês com Halter Bilateral",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Tríceps Francês com Halteres",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Tríceps Francês na Polia com Corda",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Tríceps Francês no Banco Inclinado com Halter",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Tríceps Pulley Barra",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Tríceps Pulley Barra V",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Tríceps Pulley Corda",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Tríceps Pulley Pegada Invertida",g:"Braços",eq:"Cabo",sec:"",how:""},
+{n:"Tríceps Testa Pegada Neutra com Halteres",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Tríceps Testa com Banco Declinado com Halteres",g:"Braços",eq:"Halteres",sec:"",how:""},
+{n:"Tríceps Testa com Barra",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Tríceps Testa com Barra Pegada Invertida",g:"Braços",eq:"Barra",sec:"",how:""},
+{n:"Tríceps no Banco",g:"Braços",eq:"Peso Corporal",sec:"",how:""},
+{n:"Academia Airbike",g:"Cardio",eq:"Máquina",sec:"",how:""},
+{n:"Academia Bicicleta Ergométrica Reclinada",g:"Cardio",eq:"Máquina",sec:"",how:""},
+{n:"Academia Bike",g:"Cardio",eq:"Máquina",sec:"",how:""},
+{n:"Academia Corrida na Bicicleta Ergométrica",g:"Cardio",eq:"Máquina",sec:"",how:""},
+{n:"Academia Esteira Ergométrica",g:"Cardio",eq:"Máquina",sec:"",how:""},
+{n:"Academia Esteira com Inclinação",g:"Cardio",eq:"Máquina",sec:"",how:""},
+{n:"Academia Hands Bike",g:"Cardio",eq:"Máquina",sec:"",how:""},
+{n:"Academia Máquina Eliptica",g:"Cardio",eq:"Máquina",sec:"",how:""},
+{n:"Academia Máquina Simulador Escada",g:"Cardio",eq:"Máquina",sec:"",how:""},
+{n:"Academia Máquina de Caminhada Ondulatorio",g:"Cardio",eq:"Máquina",sec:"",how:""},
+{n:"Academia Plataforma Vibratoria",g:"Cardio",eq:"Peso Corporal",sec:"",how:""},
+{n:"Arranco com Barra",g:"Cardio",eq:"Barra",sec:"",how:""},
+{n:"Arranco com Kettlebell de um Braço",g:"Cardio",eq:"Kettlebell",sec:"",how:""},
+{n:"Arranco de Potência",g:"Cardio",eq:"Peso Corporal",sec:"",how:""},
+{n:"Arranco e Levantamento com Kettlebell",g:"Cardio",eq:"Kettlebell",sec:"",how:""},
+{n:"Arranque e Arremesso com Kettlebell",g:"Cardio",eq:"Kettlebell",sec:"",how:""},
+{n:"Arremesso com Barra",g:"Cardio",eq:"Barra",sec:"",how:""},
+{n:"Arremesso com Haltere de um Braço",g:"Cardio",eq:"Halteres",sec:"",how:""},
+{n:"Arremesso de Bola de Reação",g:"Cardio",eq:"Bola/Bosu",sec:"",how:""},
+{n:"Arremesso de Medicina Bola com Levantamento de Tronco",g:"Cardio",eq:"Bola/Bosu",sec:"",how:""},
+{n:"Arremesso e Pressão com Barra",g:"Cardio",eq:"Barra",sec:"",how:""},
+{n:"Balanos com Kettlebell",g:"Cardio",eq:"Kettlebell",sec:"",how:""},
+{n:"Barbell Hang Clean",g:"Cardio",eq:"Peso Corporal",sec:"",how:""},
+{n:"Burpee Jack",g:"Cardio",eq:"Peso Corporal",sec:"",how:""},
+{n:"Burpees",g:"Cardio",eq:"Peso Corporal",sec:"",how:""},
+{n:"Corda de Batalha",g:"Cardio",eq:"Corda",sec:"",how:""},
+{n:"Dumbbell Power Clean",g:"Cardio",eq:"Peso Corporal",sec:"",how:""},
+{n:"Flexão com Kettlebell Profunda",g:"Cardio",eq:"Kettlebell",sec:"",how:""},
+{n:"Heaving Snatch Balance",g:"Cardio",eq:"Peso Corporal",sec:"",how:""},
+{n:"Impulsão com Barra",g:"Cardio",eq:"Barra",sec:"",how:""},
+{n:"Kettlebell Hang Clean",g:"Cardio",eq:"Kettlebell",sec:"",how:""},
+{n:"Kettlebell em Forma de Oito",g:"Cardio",eq:"Kettlebell",sec:"",how:""},
+{n:"Levantamento Lateral com Kettlebell",g:"Cardio",eq:"Kettlebell",sec:"",how:""},
+{n:"Levantamento Turco",g:"Cardio",eq:"Peso Corporal",sec:"",how:""},
+{n:"Muscle Snatch",g:"Cardio",eq:"Peso Corporal",sec:"",how:""},
+{n:"Muscle Up",g:"Cardio",eq:"Peso Corporal",sec:"",how:""},
+{n:"Power Clean",g:"Cardio",eq:"Peso Corporal",sec:"",how:""},
+{n:"Pular Corda",g:"Cardio",eq:"Corda",sec:"",how:""},
+{n:"Swing de Kettlebell",g:"Cardio",eq:"Kettlebell",sec:"",how:""},
+{n:"Swing de Kettlebell de um Braço",g:"Cardio",eq:"Kettlebell",sec:"",how:""},
+{n:"Catavento Corporal",g:"Core",eq:"Peso Corporal",sec:"",how:""},
+{n:"Contração Abdominal",g:"Core",eq:"Peso Corporal",sec:"",how:""},
+{n:"Moinho com Kettlebell",g:"Core",eq:"Kettlebell",sec:"",how:""},
+{n:"Moinho de Vento com Haltere",g:"Core",eq:"Halteres",sec:"",how:""},
+{n:"Superman",g:"Core",eq:"Peso Corporal",sec:"",how:""},
+{n:"Torção Oblíqua Sentada",g:"Core",eq:"Peso Corporal",sec:"",how:""},
+{n:"Barra Fixa",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Barra Fixa Assistida",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Da Espinha Extensão Lombar Sentada",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Espinha Extensão Lombar com Peso",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Espinha Hiperextensão",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Espinha Hiperextensão Invertida de Sapo",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Espinha Hiperextensão com Torção",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Espinha Hiperextensão de Lombar no Banco Plano",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Espinha Hiperextensão no Chão",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Espinha Superman",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dips de Escápula",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dumbbell Raise",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Elevação Lateral Tronco Inclinado",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Elevação de Deltoide Posterior com Halteres Inclinado",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Elevação de Deltoide em Y com Halteres Inclinado",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Elevação de T com Halteres Inclinada",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Elevações de Ombros na Paralela",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Encolhimento Acima da Cabeça",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Encolhimento Inclinado Pronado",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Encolhimento Sentado de Gittleson com Halteres",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Encolhimento com Alavanca",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Encolhimento com Cabo",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Encolhimento com Halteres",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Encolhimento com Halteres em Declive",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Encolhimento de Barra",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Encolhimento de Barra Atrás das Costas",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Encolhimento de Ombros na Máquina Smith",g:"Costas",eq:"Smith",sec:"",how:""},
+{n:"Encolhimento de Ombros por Trás com Barra",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Encolhimento na Máquina",g:"Costas",eq:"Máquina",sec:"",how:""},
+{n:"Face Pull",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Levantamento Terra",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Levantamento Terra Romeno",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Meio Agachado com Puxada para o Rosto no Cabo",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Máquina de Remo",g:"Costas",eq:"Máquina",sec:"",how:""},
+{n:"Pull Up",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Pulldown Inclinado com Corda",g:"Costas",eq:"Corda",sec:"",how:""},
+{n:"Pulldown Unilateral no Cabo",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Pulldown com Corda",g:"Costas",eq:"Corda",sec:"",how:""},
+{n:"Pullover com Barra",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Pullover com Barra W Pegada Invertida",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Pullover com Barra no Banco Declinado",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Pullover com Cabo",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Pullover com Cabo Sentado",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Pullover na Máquina de Alavanca",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Puxada Alta",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Puxada Alta Invertida",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Puxada Alta Unilateral Alta Ajoelhada",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Puxada Alta com Alavanca",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Puxada Alta com Cabos Duplos",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Puxada Alta com Triângulo",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Puxada Alta com um Joelho Apoiado",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Puxada Alta na Máquina Nuca",g:"Costas",eq:"Máquina",sec:"",how:""},
+{n:"Puxada Alta na Polia Nuca",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Puxada Escapular na Barra Fixa",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Puxada com um Braço com Cabo",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Puxada com um Braço com Peso Adicional",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Puxada de Face com Cabo Cruzado",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Puxada em Pé com Torção na Polia",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Puxada na Polia Alta com Pegada Fechada",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Puxada para o Rosto de Joelhos",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Remada Alta com Barra W",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Remada Alta com Cabo",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Remada Alta com Halter",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Remada Alta com Halteres Unilateral",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Remada Cruzada no Cross",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Remada Curvada Inclinada com Barra",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Remada Curvada com Barra",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Remada Curvada com Barra de Pegada Alternada Ampla com Adução de Escápula",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Remada Curvada com Halteres",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Remada Curvada com Halteres com Pegada Invertida",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Remada Curvada com Kettlebell",g:"Costas",eq:"Kettlebell",sec:"",how:""},
+{n:"Remada Curvada com Pegada Invertida na Barra",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Remada Curvada em T",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Remada Curvada no Smith",g:"Costas",eq:"Smith",sec:"",how:""},
+{n:"Remada Frontal com Alavanca",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Remada Inclinada a 45 Graus",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Remada Inclinada com Cabo",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Remada Inclinada com Pegada Neutra com Halteres",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Remada Inclinada com Pegada Reversa com Halteres",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Remada Inclinada no Banco com Cabo",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Remada Invertida",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Remada Invertida com Cable Inclinado",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Remada Invertida com Halteres Inclinado",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Remada Renegada com Halteres",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Remada Sentada com Anilhas",g:"Costas",eq:"Anilha",sec:"",how:""},
+{n:"Remada Sentada com Cabo",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Remada Sentada com Corda na Polia",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Remada Sentada na Máquina",g:"Costas",eq:"Máquina",sec:"",how:""},
+{n:"Remada Sentado com Cabo Pegada Fechada",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Remada T Invertida com Alavanca",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Remada T com Alavanca",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Remada T com Landmine",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Remada Unilateral com Barra",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Remada Unilateral com Barra Landmine",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Remada Unilateral com Cabo",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Remada com Barra",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Remada com Barra Curvada para Trás",g:"Costas",eq:"Barra",sec:"",how:""},
+{n:"Remada com Cabo Sentada Unilateral com Torção",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Remada com Halteres em Posição Prancha",g:"Costas",eq:"Halteres",sec:"",how:""},
+{n:"Remada de Espingarda",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Remada em Y com Cabo",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Serrote",g:"Costas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Voador de Deltoides Posterior com Cabo",g:"Costas",eq:"Cabo",sec:"",how:""},
+{n:"Voador na Máquina para Deltoides Posteriores",g:"Costas",eq:"Máquina",sec:"",how:""},
+{n:"Adução de Quadril Deitado de Lado",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Andar de Pato",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Bola Medicinal Lanada para Cima e para Baixo",g:"Funcional",eq:"Bola/Bosu",sec:"",how:""},
+{n:"Bola na Parede",g:"Funcional",eq:"Bola/Bosu",sec:"",how:""},
+{n:"Carregamento Zercher",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Cruz de Ferro com Halteres",g:"Funcional",eq:"Halteres",sec:"",how:""},
+{n:"Círculos com os Braços",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Círculos com um Braço",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Deslize de Parede do Serrátil com Rolo de Espuma",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dorsiflexão Plantar",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dumbbell Devil Press",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Exercício de Bailarina Sentada",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Exercício de Retração Escapular Sentada",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Flexão com Parada de Mos",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Inclinação Lateral",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Inclinação Lateral em Pé",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Levantamento de Braço Apoiado na Parede",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Protração e Retração da Escápula",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Rolagem de Espuma para Isquiotibiais",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Rolando Como uma Bola",g:"Funcional",eq:"Bola/Bosu",sec:"",how:""},
+{n:"Salto para Caixa 2 para 1",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Toque Lateral dos Dedos dos Pés em Pé",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Toque nos Dedos dos Pés Sentado",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Toque nos Dedos dos Pés em Pé",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Toques de Dedos em Pé",g:"Funcional",eq:"Peso Corporal",sec:"",how:""},
+{n:"Abraço com Tapinhas nas Costas",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Abraços nos Joelhos em Pé",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Assistido Reverso Peitoral e Ombro",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Borboleta",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Com Pvc na Posição Frontal de Rack",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Cobra Alongamento Abdominal",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Esfinge",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Panturrilha Agachado",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Panturrilha com Descida do Calcanhar",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Parte Superior das Costas",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Virilha Sentada",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Das Costas com Rolo de Espuma",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Adutores com Pernas Afastadas em Pé",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Espuma Ombro Posterior",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Espuma nas Costas",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Espuma nos Quadríceps",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Espuma nos Romboides",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Espuma para Fascite Plantar",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Espuma para Ombro e Peito Frontal",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Espuma para Panturrilhas",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Espuma para os Glúteos",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Glúteos Deitado",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Isquiotibiais Deitado",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Isquiotibiais em Pé",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Meio Sapo",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Ombro Reverso em Pé",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Ombro com o Braço Cruzado",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Panturrilha com Corda",g:"Mobilidade",eq:"Corda",sec:"",how:""},
+{n:"De Panturrilha com uma Perna",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Panturrilha com uma Perna Esticada",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Panturrilha em Passo Largo",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Panturrilha em Posição Estática",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Panturrilha na Parede",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Peixe",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Pernas Duplo",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Punho",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Pés e Tornozelos",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Quadril 90 90",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Quadríceps Ajoelhado",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Quadríceps em Quatro Apoios",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Rotação da Coluna em Pé",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Tríceps em Pé",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dinâmico do Peitoral",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Arco",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Arco Oscilante",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Bebê Feliz",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Desviador Ulnar e Extensor do Punho",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Gastrocnêmio com Joelho Flexionado",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Manguito Rotador",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Ombro com Toalha",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Peito Acima da Cabeça",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Peito com Rolo de Espuma",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Peito e Parte Frontal dos Ombros",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Peitoral Até as Costas",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Peitoral Reverso",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Peitoral com um Braço em Pé",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Peitoral e do Ombro na Porta",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Piriforme Sentado",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Sapo",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Tendão de Aquiles em Pé",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Tibial Posterior",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Do Trato Iliotibial com Rolo de Espuma",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Adutores Sentado",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Adutores com Pernas Abertas em Pé",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Adutores com a Perna Estendida Ajoelhado",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Adutores da Coxa com Rolo de Espuma",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Adutores em Posição Sentada com Pernas Abertas",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Extensores dos Dedos dos Pés",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Flexores de Quadril Ajoelhado",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Flexores do Quadril em Posição de Joelho",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Flexores dos Dedos dos Pés em Pé",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Isquiotibiais Sentado",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Isquiotibiais em Pé",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Isquiotibiais em Pé com a Perna Cruzada",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Latssimos Dorsais com Rolo de Espuma",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Dos Ombros por Trás das Costas",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Em Círculos nos Punhos",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Em Pé dos Quadríceps",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Inclinado Lateral em Pé",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Lateral da Parte Interna da Coxa",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Na Parede do Canto",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Piriforme",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Reverso Assistido Peito e Ombro",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Reverso de Pulso",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Sentado para a Panturrilha com Perna Esticada",g:"Mobilidade",eq:"Peso Corporal",sec:"",how:""},
+{n:"Crucifixo Inverso Unilateral com Cabo",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Círculos de Braço com Pesos",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Da Coluna Torácica de Joelhos",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Pé e Tornozelo",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Desenvolvimento Arnold",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Desenvolvimento Arnold Metade",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Desenvolvimento Arnold com Kettlebell",g:"Ombros",eq:"Kettlebell",sec:"",how:""},
+{n:"Desenvolvimento Arnold com um Braço",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Desenvolvimento Cubano Sentado com Halteres",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Desenvolvimento Cubano com Halteres",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Desenvolvimento Militar Inclinado com Barra Presa no Chão",g:"Ombros",eq:"Barra",sec:"",how:""},
+{n:"Desenvolvimento Militar com Barra",g:"Ombros",eq:"Barra",sec:"",how:""},
+{n:"Desenvolvimento Militar com Barra no Chão Ajoelhado",g:"Ombros",eq:"Barra",sec:"",how:""},
+{n:"Desenvolvimento Militar com Pegada Fechada",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Desenvolvimento Militar de uma Mão com Kettlebell",g:"Ombros",eq:"Kettlebell",sec:"",how:""},
+{n:"Desenvolvimento Militar em Pé na Máquina Smith",g:"Ombros",eq:"Smith",sec:"",how:""},
+{n:"Desenvolvimento de Ombro Alternada em Pé com Halteres",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Desenvolvimento de Ombro Deitado",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Desenvolvimento de Ombro Reversa na Máquina",g:"Ombros",eq:"Máquina",sec:"",how:""},
+{n:"Desenvolvimento de Ombro Unilateral com Halter",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Desenvolvimento de Ombro com Barra Sentado",g:"Ombros",eq:"Barra",sec:"",how:""},
+{n:"Desenvolvimento de Ombro com Cabo",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Desenvolvimento de Ombro com Cabo Ajoelhado",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Desenvolvimento de Ombro com Halteres em Forma de W",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Desenvolvimento de Ombro com Halteres em Z",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Desenvolvimento de Ombro com Kettlebell",g:"Ombros",eq:"Kettlebell",sec:"",how:""},
+{n:"Desenvolvimento de Ombro na Máquina",g:"Ombros",eq:"Máquina",sec:"",how:""},
+{n:"Desenvolvimento de Ombro na Máquina Pegada Martelo",g:"Ombros",eq:"Máquina",sec:"",how:""},
+{n:"Desenvolvimento de Ombro no Banco com Halteres",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Desenvolvimento de Ombros Atrás da Cabeça na Máquina Smith",g:"Ombros",eq:"Smith",sec:"",how:""},
+{n:"Desenvolvimento de Ombros Atrás do Pescoço Sentado",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Desenvolvimento de Ombros com Barra W com Pegada Invertida",g:"Ombros",eq:"Barra",sec:"",how:""},
+{n:"Desenvolvimento de Ombros com Halteres em Pé com Pegada Neutra",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Desenvolvimento de Ombros com Rotação Alternada com Halteres",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Desenvolvimento de Ombros na Máquina",g:"Ombros",eq:"Máquina",sec:"",how:""},
+{n:"Desenvolvimento de Ombros na Máquina Smith",g:"Ombros",eq:"Smith",sec:"",how:""},
+{n:"Desenvolvimentos com Kettlebell Unilateral de Joelhos",g:"Ombros",eq:"Kettlebell",sec:"",how:""},
+{n:"Do Corpo Superior Deitado",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Elevação Frontal Alternada com Halteres",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Frontal com Barra Girando",g:"Ombros",eq:"Barra",sec:"",how:""},
+{n:"Elevação Frontal com Barra W Inclinada",g:"Ombros",eq:"Barra",sec:"",how:""},
+{n:"Elevação Frontal com Cabo Duplo no Cross",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Elevação Frontal com Dois Braços com Halteres",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Frontal com Halteres",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Frontal com Halteres Sentado",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Lateral Alternada com Halteres",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Lateral Cruzada no Crossover",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Elevação Lateral Deitado",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Elevação Lateral Unilateral com Cabo",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Elevação Lateral Unilateral com Haltere Inclinado",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Lateral Unilateral com Halteres",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Lateral com Barra no Chão",g:"Ombros",eq:"Barra",sec:"",how:""},
+{n:"Elevação Lateral com Braço Flexionado",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Elevação Lateral com Halteres Sentado",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Lateral com Halteres com Apoio no Peito",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Lateral com Halteres para Deltoides Posteriores Deitado",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Lateral com Tronco Inclinado",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Elevação Lateral de Braços com Cabo",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Elevação Lateral de Braços com Halteres",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Lateral de Deltide Posterior com Halteres",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Lateral de Halteres Inclinada",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Lateral e Frontal com Halteres",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevação Lateral na Máquina",g:"Ombros",eq:"Máquina",sec:"",how:""},
+{n:"Elevação Posterior Unilateral com Halteres em Decbito Prono",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Elevações Frontais com Halteres Apoiadas no Peito",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Em Pé",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Espinhal Deitado",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Externa com Cabo a 90 Graus",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Externa com Cabo em Posição de Joelhos",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Externa de Halteres Apoiada no Banco",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Externa de Ombro com Cabo",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Externa de Ombro com Faixa Elstica",g:"Ombros",eq:"Elástico",sec:"",how:""},
+{n:"Externa de Quadril Sentado com Faixa Elstica",g:"Ombros",eq:"Elástico",sec:"",how:""},
+{n:"Externa de Quadril com Faixa Elstica",g:"Ombros",eq:"Elástico",sec:"",how:""},
+{n:"Externa do Ombro",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Externa do Ombro Deitado com Haltere",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Externa do Pé com Faixa Elstica",g:"Ombros",eq:"Elástico",sec:"",how:""},
+{n:"Flexão Alternada de Ombro",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Interna de Cabo a 90 Graus",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Interna de Ombro com Cabo",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Interna do Ombro",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Interna do Ombro Sentada com Cabo",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Interna do Quadril Sentado com Faixa Elstica",g:"Ombros",eq:"Elástico",sec:"",how:""},
+{n:"Levantamento Frontal Alternado com Haltere Sentado",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Levantamento Frontal Unilateral com Cabo",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Levantamento Frontal com Anilha",g:"Ombros",eq:"Anilha",sec:"",how:""},
+{n:"Levantamento Frontal com Barra",g:"Ombros",eq:"Barra",sec:"",how:""},
+{n:"Levantamento Frontal de Cabo com Dois Braços",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Levantamento de Halteres de 3 Maneiras",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Levantamento de Halteres de 4 Maneiras 2",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Máquina de Elevação Lateral",g:"Ombros",eq:"Máquina",sec:"",how:""},
+{n:"Para Trás de Joelhos",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Pndulo de Ombro",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Remada Alta 1",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Remada Inclinada a 45 Graus",g:"Ombros",eq:"Peso Corporal",sec:"",how:""},
+{n:"Remada Inversa com Cabos Deitado",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Remada Lateral com Halteres Sentado",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Remada com Halteres para a Posterior de Ombros",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Remada de Deltoide Posterior Sentado com Haltere",g:"Ombros",eq:"Halteres",sec:"",how:""},
+{n:"Voador Invertido",g:"Ombros",eq:"Máquina",sec:"",how:""},
+{n:"Voador para Deltoides Posterior com Cabo",g:"Ombros",eq:"Cabo",sec:"",how:""},
+{n:"Anilha Press",g:"Peito",eq:"Anilha",sec:"",how:""},
+{n:"Cross Over Polia Alta",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Cross Over Polia Baixa",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Cross Over Polia Media",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Crossover Unilateral com Cabo",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Crossover de Peitoral Superior com Cabo",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Crossover na Alavanca",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Crucifixo Deitado com Cabo",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Crucifixo Inclinado Cross",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Crucifixo Unilateral em Declinado com Cabo",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Crucifixo com Cabo Declinado",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Crucifixo com Halteres",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Crucifixo com Halteres Declinado",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Crucifixo com Halteres Inclinado",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Flexes de Apoio de Mão na Parede",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Flexão de Braço Declinada com Bola de Estabilidade",g:"Peito",eq:"Bola/Bosu",sec:"",how:""},
+{n:"Flexão de Braço com Bola Medicinal em um Braço",g:"Peito",eq:"Bola/Bosu",sec:"",how:""},
+{n:"Flexão de Braço com Bola de Estabilidade",g:"Peito",eq:"Bola/Bosu",sec:"",how:""},
+{n:"Flexão de Braço com as Mos Entre Bancos",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Flexão de Braço em Posição de Parada de Mão com Balano",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Joelho Alternado no Peito",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Mergulho de Peito Assistido",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Máquina de Voador de Peito Inclinado",g:"Peito",eq:"Máquina",sec:"",how:""},
+{n:"Paralelas",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Pullover com Haltere",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Pullover com Halteres na Bola de Estabilidade",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Pullover de Braço Reto com Halteres Joelhos a 90 Graus",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Supino",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Supino Alternado com Halteres",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Supino Declinada com Alavanca",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Supino Declinada na Máquina",g:"Peito",eq:"Máquina",sec:"",how:""},
+{n:"Supino Declinado Pegada Martelo",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Supino Declinado Unilateral Pegada Martelo com Haltere",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Supino Declinado com Halteres",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Supino Declinado na Máquina Smith",g:"Peito",eq:"Smith",sec:"",how:""},
+{n:"Supino Inclinado com Barra",g:"Peito",eq:"Barra",sec:"",how:""},
+{n:"Supino Inclinado com Cabo",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Supino Inclinado com Halteres",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Supino Inclinado com Halteres e Pegada Fechada",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Supino Inclinado com Halteres e Pegada Invertida",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Supino Inclinado com Halteres em Martelo",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Supino Inclinado com Pegada Fechada",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Supino Inclinado na Alavanca",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Supino Inclinado na Máquina",g:"Peito",eq:"Máquina",sec:"",how:""},
+{n:"Supino Inclinado na Máquina com Pegada Martelo",g:"Peito",eq:"Máquina",sec:"",how:""},
+{n:"Supino Invertido com Pegada Aberta",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Supino Pegada Martelo",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Supino Reto em Pé no Cross Over",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Supino Reto na Máquina",g:"Peito",eq:"Máquina",sec:"",how:""},
+{n:"Supino Unilateral com Alavanca",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Supino Unilateral com Halteres com Pegada Reversa",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Supino Unilateral no Cabo",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Supino com Alavanca",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Supino com Banco Inclinado no Smith",g:"Peito",eq:"Smith",sec:"",how:""},
+{n:"Supino com Barra Declinado",g:"Peito",eq:"Barra",sec:"",how:""},
+{n:"Supino com Barra no Chão",g:"Peito",eq:"Barra",sec:"",how:""},
+{n:"Supino com Cabo Sentado",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Supino com Haltere Pegada Fechada",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Supino com Halteres",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Supino com Halteres Pegada Invertida",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Supino com Halteres com Pegada Fechada",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Supino com Kettlebell de um Braço",g:"Peito",eq:"Kettlebell",sec:"",how:""},
+{n:"Supino com Kettlebell no Chão",g:"Peito",eq:"Kettlebell",sec:"",how:""},
+{n:"Supino com Pegada Aberta",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Supino com Pegada Fechada",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Supino com Pegada Fechada Sentado com Cabo",g:"Peito",eq:"Cabo",sec:"",how:""},
+{n:"Supino na Máquina",g:"Peito",eq:"Máquina",sec:"",how:""},
+{n:"Supino na Máquina Smith",g:"Peito",eq:"Smith",sec:"",how:""},
+{n:"Supino na Máquina para Miolo do Peitoral",g:"Peito",eq:"Máquina",sec:"",how:""},
+{n:"Supino no Banco Inclinado 30 Graus com Pegada Invertida",g:"Peito",eq:"Peso Corporal",sec:"",how:""},
+{n:"Supino no Smith com o Triângulo",g:"Peito",eq:"Smith",sec:"",how:""},
+{n:"Voador Unilateral no Solo com Barra",g:"Peito",eq:"Barra",sec:"",how:""},
+{n:"Voador com Halteres para Cima",g:"Peito",eq:"Halteres",sec:"",how:""},
+{n:"Voador na Máquina",g:"Peito",eq:"Máquina",sec:"",how:""},
+{n:"Voador no Pec Deck",g:"Peito",eq:"Máquina",sec:"",how:""},
+{n:"Abdução Lateral do Quadril com Alavanca",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Abdução de Quadril com Cabo",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Abdução de Quadril com Ponte",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Adução de Pernas Alongamento do Adutor Maior",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Adução do Quadril Lateral com Alavanca",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Adução do Quadril com Cabo",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Afundo Lateral com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Afundo com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Afundo com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Afundo com Landmine",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Afundo na Máquina Smith",g:"Pernas",eq:"Smith",sec:"",how:""},
+{n:"Afundo no Banco com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Agachamento",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento Búlgaro com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Agachamento Búlgaro com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Agachamento Búlgaro com Salto",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento Camaro",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento Frontal",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento Frontal com Barra no Banco",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Agachamento Frontal com Barra no Smith",g:"Pernas",eq:"Smith",sec:"",how:""},
+{n:"Agachamento Frontal com Cabo",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Agachamento Frontal com Haltere",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Agachamento Frontal com Kettlebell",g:"Pernas",eq:"Kettlebell",sec:"",how:""},
+{n:"Agachamento Goblet com Haltere",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Agachamento Hack Invertido",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Agachamento Hack com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Agachamento Jefferson",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento Pistol com Trx",g:"Pernas",eq:"TRX",sec:"",how:""},
+{n:"Agachamento Pistola Apoiado",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento Pistola com Apoio em Caixa",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento Pistola com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Agachamento Pistola na Caixa",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento Sissy",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento Skater",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento Sumô com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Agachamento Sumô com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Agachamento Sumô sem Pesos",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento Unilateral Cruzado com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Agachamento Unilateral Cruzado com Haltere",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Agachamento Zercher",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento com Barra Sobre a Cabeça",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Agachamento com Barra e Salto",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Agachamento com Barra no Chão Seguido de Levantamento Militar",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Agachamento com Cinto",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento com Halteres no Banco",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Agachamento com Kettlebell",g:"Pernas",eq:"Kettlebell",sec:"",how:""},
+{n:"Agachamento com Salto Ajoelhado",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento com Salto Usando Barra Hexagonal",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Agachamento com Salto Usando Barra Hexagonal",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Agachamento com Salto e Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Agachamento com Smith Trava",g:"Pernas",eq:"Smith",sec:"",how:""},
+{n:"Agachamento com Sustentacao e Elevação de Panturrilhas",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento e Press com Kettlebell",g:"Pernas",eq:"Kettlebell",sec:"",how:""},
+{n:"Agachamento em Pli com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Agachamento na Máquina Abdutora",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Agachamento na Máquina Hack",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Agachamento na Parede com Bola de Exercício",g:"Pernas",eq:"Bola/Bosu",sec:"",how:""},
+{n:"Agachamento no Landmine",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Agachamento no Smith",g:"Pernas",eq:"Smith",sec:"",how:""},
+{n:"Arranco com Kettlebell em Afundo",g:"Pernas",eq:"Kettlebell",sec:"",how:""},
+{n:"Avanço Invertido",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Avanço Invertido com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Avanço com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Avanço com Cabo",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Avanço com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Avanço com Halteres para Trás",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Avanço com Puxador de Cabo",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Avanço sem Peso Corporal",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Cadeira Extensora",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Caminhada com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Caminhada na Parada de Mão",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Caminhada na Parede",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Pernas Bom Dia",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Pernas Bom Dia com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"De Pernas Bom Dia na Máquina Smith",g:"Pernas",eq:"Smith",sec:"",how:""},
+{n:"De Pernas Cadeira Flexora",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Pernas Elevação de Perna em Pé com Alavanca",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"De Pernas Flexão Nórdica na Máquina",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"De Pernas Flexão Nórdica no Aparelho",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Pernas Flexão de Pernas com Alavanca",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"De Pernas Flexão de Pernas com Halteres Declinado",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"De Pernas Flexão de Pernas na Bola de Estabilidade",g:"Pernas",eq:"Bola/Bosu",sec:"",how:""},
+{n:"De Pernas Leg Press 90 no Smith",g:"Pernas",eq:"Smith",sec:"",how:""},
+{n:"De Pernas Mesa Flexaora Unilateral",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Pernas Mesa Flexora",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"De Pernas Máquina de Flexão de Perna Unilateral",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"De Pernas Stiff Unilateral com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"De Pernas Stiff Unilateral com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"De Pernas Stiff com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"De Pernas Stiff com Halter",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Descida de um Perna com Step",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Elevação Pélvica Unilateral com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Elevação Pélvica com Banda de Resistncia",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Elevação Pélvica com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Elevação Pélvica com Barra Declinado",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Elevação Pélvica na Máquina",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Elevação Pélvica na Máquina Smith",g:"Pernas",eq:"Smith",sec:"",how:""},
+{n:"Elevação Pélvica na Máquina de Extensão de Pernas",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Elevação Unilateral de Panturrilha no Leg Press",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Elevação com Barra em Degrau",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Elevação de Joelho com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Elevação de Panturrilha Sentado com Alavanca",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Elevação de Panturrilha Sentado com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Elevação de Panturrilha Sentado com Peso",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Elevação de Panturrilha com Barra em Pé",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Elevação de Panturrilha com uma Perna na Máquina Hack",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Elevação de Panturrilha em Máquina em Pé",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Elevação de Panturrilha na Máquina",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Elevação de Panturrilha no Leg Press",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Elevação de Panturrilha no Leg Press Horizontal",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Elevação de Panturrilha no Smith",g:"Pernas",eq:"Smith",sec:"",how:""},
+{n:"Elevação de Panturrilhas",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Elevação de Panturrilhas no Hack",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Elevação de Perna Nica com Equilíbrio e Rosca de Bíceps",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Extensão de Perna Unilateral",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Extensão de Perna na Máquina Smith Reversa",g:"Pernas",eq:"Smith",sec:"",how:""},
+{n:"Extensão de Quadril com Cabo",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Extensão de Quadril em Pé com Alavanca",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Glúteo Coice na Alavanca",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Glúteo Coice na Máquina",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Glúteo Coice na Máquina de Extensão de Pernas",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Glúteo Coice no Smith",g:"Pernas",eq:"Smith",sec:"",how:""},
+{n:"Glúteos Coice Nilateral Polia Baixa",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Glúteos na Polia Baixa",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Leg Press",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Leg Press Horizontal",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Leg Press Unilateral",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Levantamento Terra Romeno",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Levantamento Terra Romeno com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Levantamento Terra Sumô",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Levantamento Terra Sumô com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Levantamento Terra Zercher",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Levantamento Terra com Alavanca",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Levantamento Terra com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Levantamento Terra com Barra Hexagonal",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Levantamento Terra com Barra no Landmine",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Levantamento Terra com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Levantamento Terra com Kettlebell",g:"Pernas",eq:"Kettlebell",sec:"",how:""},
+{n:"Levantamento com Suporte",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Levantamento de Panturrilha com Alavanca",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Levantamento de Panturrilha com Apoio de Banco",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Levantamento de Panturrilha com Apoio de uma Perna",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Levantamento de Panturrilha com Apoio e Sobrecarga",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Máquina de Abdução de Quadril",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Máquina de Adução de Quadril",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Panturrilha em Pé no Smith",g:"Pernas",eq:"Smith",sec:"",how:""},
+{n:"Panturrilhas em Pé",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Ponte com Halteres",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Ponte de Glúteos com Barra",g:"Pernas",eq:"Barra",sec:"",how:""},
+{n:"Pressão Unilateral na Máquina",g:"Pernas",eq:"Máquina",sec:"",how:""},
+{n:"Puxada com Halteres Entre as Pernas",g:"Pernas",eq:"Halteres",sec:"",how:""},
+{n:"Puxada de Cabo Ajoelhada",g:"Pernas",eq:"Cabo",sec:"",how:""},
+{n:"Quadrpede com Elevação de Braço e Perna Contralateral",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Quatro Apoios",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Salto na Caixa",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Salto na Caixa para Agachamento Pistola",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Subida na Corda sem Pernas",g:"Pernas",eq:"Corda",sec:"",how:""},
+{n:"Subida no Step com Elevação de Joelhos",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Virar Pneu",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+{n:"Wall Sit",g:"Pernas",eq:"Peso Corporal",sec:"",how:""},
+];
+EX.forEach((e,i)=>e.id=i);
+const GIFS=window.GIFS||{};
+const GIF_DIR="";
+const MUSCLE_ICONS={Peito:"🏋️",Costas:"🚣",Pernas:"🦵",Ombros:"💪",Braços:"🔩",Core:"🎯",Cardio:"❤️"};
+
+/* ---------------- STATE ---------------- */
+let S;
+function defaultState(){
+  return {
+    routines:[],
+    history:[],prs:{},
+    measures:{"Peso":{unit:"kg",data:[]},"Cintura":{unit:"cm",data:[]},"% Gordura":{unit:"%",data:[]},"Massa Magra":{unit:"kg",data:[]}}
+  };
+}
+function uid(){return Math.random().toString(36).slice(2,9)}
+function load(){try{const r=localStorage.getItem(LS_KEY);S=r?JSON.parse(r):defaultState();}catch(e){S=defaultState();}
+  if(!S.routines)S=defaultState();}
+function save(){localStorage.setItem(LS_KEY,JSON.stringify(S));}
+load();
+
+// Pede ao navegador pra tratar os dados do FORJA como "persistentes":
+// reduz (não elimina) o risco do celular apagar os dados sozinho quando
+// o armazenamento do aparelho fica cheio. Ainda assim, use o backup
+// (botão 💾 no topo) de vez em quando — é a garantia real.
+if(navigator.storage&&navigator.storage.persist){
+  navigator.storage.persist().catch(()=>{});
+}
+
+function exportBackup(){
+  const data=JSON.stringify(S,null,2);
+  const blob=new Blob([data],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const d=new Date().toISOString().slice(0,10);
+  a.href=url;a.download="forja-backup-"+d+".json";
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  toast("Backup baixado ✔");
+}
+function importBackupFile(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const data=JSON.parse(reader.result);
+      if(!data||!Array.isArray(data.routines)) throw new Error("formato inválido");
+      S=data;save();closeModal();render();toast("Backup restaurado ✔");
+    }catch(e){toast("Arquivo de backup inválido");}
+  };
+  reader.readAsText(file);
+}
+function openBackupModal(){
+  openModal(`<h2 style="font-size:1.05rem;font-weight:800;margin-bottom:6px">💾 Backup dos dados</h2>
+    <p class="small muted" style="margin-bottom:16px">Seus treinos, histórico e medidas ficam salvos neste aparelho/navegador. Baixe um backup de vez em quando pra não perder nada se limpar o cache ou trocar de celular.</p>
+    <button class="btn btn-primary btn-block" data-action="backup-export">⬇ Baixar backup (.json)</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:10px" data-action="backup-import-btn">⬆ Restaurar backup</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:10px" data-action="close-modal">Fechar</button>`);
+}
+
+let cur={view:"home",params:null};const stack=[];
+function go(view,params){stack.push(cur);cur={view,params};render();}
+function back(){if(stack.length)cur=stack.pop();render();}
+function nav(view){stack.length=0;cur={view,params:null};render();}
+
+let editing=null;      // routine being edited {id,name,exercises:[{exId,sets,reps,weight,rest}]}
+let pickerReturn=false;// library in picker mode
+let active=null;       // {name,start,exercises:[{exId,sets:[{reps,weight,done}]}]}
+let restEnd=0,restTotal=0,restTimer=null;
+
+/* ---------------- HELPERS ---------------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200);}
+function exById(id){return EX.find(e=>e.id===id);}
+function fmtDate(iso){const d=new Date(iso+"T12:00:00");return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});}
+function fmtDur(s){const m=Math.floor(s/60),ss=s%60;return m+":"+String(ss).padStart(2,"0");}
+function volumeOf(ex){return ex.sets.reduce((a,s)=>a+(+s.reps||0)*(+s.weight||0),0);}
+function uid2(){return uid()}
+
+/* ---------------- NAV ---------------- */
+const NAV=[{v:"home",l:"Início",ic:'<path d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5"/>'},
+{v:"routines",l:"Treinos",ic:'<path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/>'},
+{v:"library",l:"Exercícios",ic:'<path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z"/>'},
+{v:"progress",l:"Progresso",ic:'<path d="M3 17l6-6 4 4 8-8M21 7v6h-6"/>'},
+{v:"measures",l:"Medidas",ic:'<path d="M12 2v20M4 6l16 12M20 6L4 18M2 12h20"/>'}];
+function renderNav(){
+  $("#bottomNav").innerHTML=NAV.map(n=>`<button class="nav-item ${cur.view===n.v?"on":""}" data-action="nav" data-view="${n.v}">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${n.ic}</svg>
+    ${n.l}<span class="ind"></span></button>`).join("");
+}
+
+/* ---------------- CHARTS ---------------- */
+function lineChart(pts,h){
+  h=h||140;
+  if(!pts.length)return '<p class="muted small" style="text-align:center;padding:20px 0">Sem dados ainda. Registre para ver o gráfico.</p>';
+  const w=420,pad=28;
+  const vals=pts.map(p=>p.v),min=Math.min(...vals),max=Math.max(...vals),span=(max-min)||1;
+  const X=i=>pad+i*(w-pad-14)/Math.max(1,pts.length-1);
+  const Y=v=>h-pad-((v-min)/span)*(h-pad-16);
+  const line=pts.map((p,i)=>(i?"L":"M")+X(i).toFixed(1)+","+Y(p.v).toFixed(1)).join(" ");
+  const area=line+" L"+X(pts.length-1).toFixed(1)+","+(h-pad)+" L"+X(0).toFixed(1)+","+(h-pad)+" Z";
+  const dots=pts.map((p,i)=>'<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(p.v).toFixed(1)+'" r="3.5" fill="#a78bfa"/>').join("");
+  const step=Math.ceil(pts.length/5);
+  const labels=pts.map((p,i)=>i%step===0?'<text x="'+X(i).toFixed(1)+'" y="'+(h-6)+'" fill="#9a9aad" font-size="9" text-anchor="middle">'+p.label+"</text>":"").join("");
+  return '<svg class="chart" viewBox="0 0 '+w+" "+h+'"><path d="'+area+'" fill="rgba(139,92,246,.16)"/><path d="'+line+'" fill="none" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'+dots+labels+"</svg>";
+}
+function barChart(pts){
+  if(!pts.length)return '<p class="muted small" style="text-align:center;padding:20px 0">Sem treinos registrados ainda.</p>';
+  const w=420,h=140,pad=26,bw=(w-pad-14)/Math.max(pts.length,6);
+  const max=Math.max(...pts.map(p=>p.v),1);
+  const bars=pts.map((p,i)=>{const bh=(p.v/max)*(h-pad-16);
+    return '<rect x="'+(pad+i*bw+bw*0.18).toFixed(1)+'" y="'+(h-pad-bh).toFixed(1)+'" width="'+(bw*0.64).toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="4" fill="#8b5cf6" opacity="0.9"><title>'+esc(p.full)+"</title></rect>"+
+    (i%Math.ceil(pts.length/5)===0?'<text x="'+(pad+i*bw+bw/2).toFixed(1)+'" y="'+(h-6)+'" fill="#9a9aad" font-size="9" text-anchor="middle">'+p.label+"</text>":"");}).join("");
+    return '<svg class="bar" viewBox="0 0 '+w+' '+h+'">'+bars+'</svg>';
+}
+
+/* ---------------- VIEWS ---------------- */
+function render(){
+  renderNav();
+  const v=cur.view;
+  if(v==="home")return viewHome();
+  if(v==="routines")return viewRoutines();
+  if(v==="editor")return viewEditor();
+  if(v==="library")return viewLibrary();
+  if(v==="active")return viewActive();
+  if(v==="summary")return viewSummary();
+  if(v==="history")return viewHistory();
+  if(v==="progress")return viewProgress();
+  if(v==="measures")return viewMeasures();
+  if(v==="import")return viewImport();
+  viewHome();
+}
+
+/* ---- HOME ---- */
+function viewHome(){
+  const week=Date.now()-7*864e5;
+  const wk=S.history.filter(h=>new Date(h.date).getTime()>week).length;
+  const vol=S.history.reduce((a,h)=>a+h.volume,0);
+  const prCount=Object.keys(S.prs).length;
+  const d=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
+  $("#view").innerHTML=`
+    <p class="muted small" style="text-transform:capitalize">${d}</p>
+    <h1 class="page-title">Olá, atleta 💪</h1>
+    <p class="page-sub">Bora forjar o próximo nível.</p>
+    <div class="stats-grid">
+      <div class="stat"><div class="v">${wk}</div><div class="l">Treinos / 7 dias</div></div>
+      <div class="stat"><div class="v">${(vol/1000).toFixed(1)}t</div><div class="l">Volume total</div></div>
+      <div class="stat"><div class="v">${prCount}</div><div class="l">Recordes (PR)</div></div>
+    </div>
+    <div class="card" style="border-color:rgba(139,92,246,.35);background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(109,40,217,.05)),var(--surface)">
+      <div class="row-between">
+        <div><div class="card-title">Pronto para treinar?</div>
+        <p class="muted small">${S.routines.length?S.routines.length+" treino(s) planejado(s)":"Crie seu primeiro treino"}</p></div>
+        <button class="btn btn-primary btn-sm" data-action="${S.routines.length?"goto-routines":"new-routine"}">${S.routines.length?"Ver treinos":"Criar treino"}</button>
+      </div>
+    </div>
+    <div class="row-between" style="margin:18px 0 10px">
+      <h3 style="font-size:1rem;font-weight:800">Histórico recente</h3>
+      ${S.history.length?'<button class="btn btn-ghost btn-xs" data-action="open-history">Ver tudo</button>':""}
+    </div>
+    ${S.history.length?S.history.slice(0,3).map(h=>histItem(h)).join(""):
+      '<div class="empty"><div class="ico">📋</div><p class="small">Nenhum treino registrado ainda.<br>Complete um treino para ver o histórico aqui.</p></div>'}
+    ${active?'<button class="btn btn-primary btn-block" data-action="resume-active">▶ Retomar treino em andamento</button>':""}
+  `;
+}
+function histItem(h){
+  return `<div class="hist-item"><div><div class="n">${esc(h.name)}</div>
+    <div class="d">${new Date(h.date).toLocaleDateString("pt-BR")} · ${fmtDur(h.duration)} · ${h.volume.toLocaleString("pt-BR")} kg</div></div>
+    <div class="row"><button class="btn btn-ghost btn-xs" data-action="hist-del" data-id="${h.id}">🗑</button></div></div>`;
+}
+
+/* ---- ROUTINES ---- */
+function viewRoutines(){
+  $("#view").innerHTML=`
+    <h1 class="page-title">Meus Treinos</h1>
+    <p class="page-sub">Planeje, edite e inicie seus treinos.</p>
+    <button class="btn btn-primary btn-block" style="margin-bottom:16px" data-action="new-routine">＋ Novo Treino</button>
+    ${S.routines.length?S.routines.map(r=>{
+      const vol=r.exercises.length;
+      return `<div class="card"><div class="row-between">
+        <div><div class="card-title">${esc(r.name)}</div>
+        <p class="muted small">${vol} exercício(s)</p>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${r.exercises.slice(0,4).map(e=>'<span class="tag tag-gray">'+esc(exById(e.exId).n)+"</span>").join("")}${r.exercises.length>4?'<span class="tag">+'+(r.exercises.length-4)+"</span>":""}</div></div></div>
+        <div class="row" style="margin-top:12px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" data-action="start-routine" data-id="${r.id}">▶ Iniciar</button>
+          <button class="btn btn-ghost btn-sm" data-action="edit-routine" data-id="${r.id}">✏️</button>
+          <button class="btn btn-ghost btn-sm" data-action="share-routine" data-id="${r.id}">🔗</button>
+          <button class="btn btn-ghost btn-sm" data-action="dup-routine" data-id="${r.id}">⧉</button>
+          <button class="btn btn-danger btn-sm" data-action="del-routine" data-id="${r.id}">🗑</button>
+        </div></div>`;}).join(""):
+      '<div class="empty"><div class="ico">🏋️</div><p class="small">Nenhum treino criado.<br>Toque em "+ Novo Treino" para começar.</p></div>'}
+  `;
+}
+
+/* ---- EDITOR ---- */
+function viewEditor(){
+  if(!editing){back();return;}
+  $("#view").innerHTML=`
+    <div class="row" style="margin-bottom:14px"><button class="icon-btn" data-action="save-routine">✕</button>
+    <h1 class="page-title" style="flex:1">Editar Treino</h1>
+    <button class="btn btn-primary btn-sm" data-action="save-routine">Salvar</button></div>
+    <div class="field"><label>Nome do treino</label>
+    <input class="input" id="edName" value="${esc(editing.name)}" placeholder="Ex.: Treino A — Peito e Tríceps"></div>
+    <h3 style="font-size:.92rem;font-weight:800;margin:6px 0 10px">Exercícios (${editing.exercises.length})</h3>
+    ${editing.exercises.map((e,i)=>{const ex=exById(e.exId);return `
+      <div class="card" style="padding:13px">
+        <div class="row-between">
+          <div class="row"><span class="ex-ico" style="width:32px;height:32px;font-size:.85rem">${MUSCLE_ICONS[ex.g]||"🏋️"}</span>
+          <div><div style="font-weight:800;font-size:.86rem">${esc(ex.n)}</div>
+          <div class="tiny muted">${ex.g} · ${ex.eq}</div></div></div>
+          <div class="row" style="gap:4px">
+            <button class="icon-btn" style="width:28px;height:28px" data-action="ex-up" data-i="${i}" ${i===0?"disabled":""}>↑</button>
+            <button class="icon-btn" style="width:28px;height:28px" data-action="ex-down" data-i="${i}" ${i===editing.exercises.length-1?"disabled":""}>↓</button>
+            <button class="icon-btn" style="width:28px;height:28px;color:var(--red)" data-action="ex-del" data-i="${i}">✕</button>
+          </div></div>
+        <div class="setcfg">
+          <span class="grp">Séries <span class="stepper"><button data-action="cfg" data-i="${i}" data-f="sets" data-d="-1">−</button><b>${e.sets}</b><button data-action="cfg" data-i="${i}" data-f="sets" data-d="1">＋</button></span></span>
+          <span class="grp">Reps <span class="stepper"><button data-action="cfg" data-i="${i}" data-f="reps" data-d="-1">−</button><b>${e.reps}</b><button data-action="cfg" data-i="${i}" data-f="reps" data-d="1">＋</button></span></span>
+          <span class="grp">Carga (kg) <span class="stepper"><button data-action="cfg" data-i="${i}" data-f="weight" data-d="-2.5">−</button><b>${e.weight}</b><button data-action="cfg" data-i="${i}" data-f="weight" data-d="2.5">＋</button></span></span>
+          <span class="grp">Descanso <span class="stepper"><button data-action="cfg" data-i="${i}" data-f="rest" data-d="-15">−</button><b>${e.rest}s</b><button data-action="cfg" data-i="${i}" data-f="rest" data-d="15">＋</button></span></span>
+        </div></div>`;}).join("")}
+    <button class="btn btn-ghost btn-block" data-action="add-ex" style="margin-top:6px">＋ Adicionar exercício</button>
+  `;
+}
+
+/* ---- LIBRARY ---- */
+let libFilter="Todos",libSearch="";
+function viewLibrary(){
+  const groups=["Todos",...new Set(EX.map(e=>e.g))];
+  const list=EX.filter(e=>(libFilter==="Todos"||e.g===libFilter)&&(e.n.toLowerCase().includes(libSearch)||e.g.toLowerCase().includes(libSearch)));
+  $("#view").innerHTML=`
+    <h1 class="page-title">${pickerReturn?"Adicionar Exercício":"Biblioteca"}</h1>
+    <p class="page-sub">${pickerReturn?"Toque para adicionar ao treino":"2.000+ exercícios com instruções detalhadas."}</p>
+    <input class="input" style="margin-bottom:12px" placeholder="🔍 Buscar exercício..." value="${esc(libSearch)}" data-action-lib="search">
+    <div class="chips-row">${groups.map(g=>'<button class="chip '+(g===libFilter?"on":"")+'" data-action="lib-filter" data-g="'+g+'">'+g+"</button>").join("")}</div>
+    ${list.map(e=>`<div class="ex-item" data-action="${pickerReturn?"pick-ex":"ex-info"}" data-id="${e.id}">
+      ${GIFS[e.id]?'<img class="ex-thumb" loading="lazy" src="'+GIF_DIR+GIFS[e.id]+'" onerror="this.remove()">':'<span class="ex-ico">'+MUSCLE_ICONS[e.g]+"</span>"}
+      <div style="flex:1"><div class="n">${esc(e.n)}</div><div class="m">${e.g} · ${e.eq}</div></div>
+      ${pickerReturn?'<span class="tag">＋ Adicionar</span>':'<span class="muted">›</span>'}</div>`).join("")}
+  `;
+}
+
+/* ---- ACTIVE WORKOUT ---- */
+function viewActive(){
+  if(!active){nav("home");return;}
+  const doneAll=active.exercises.every(e=>e.sets.every(s=>s.done));
+  $("#view").innerHTML=`
+    <div class="row-between" style="margin-bottom:4px">
+      <div><h1 class="page-title" style="font-size:1.25rem">${esc(active.name)}</h1>
+      <p class="page-sub" style="margin-bottom:0">${fmtDur(Math.floor((Date.now()-active.start)/1000))} decorridos · ${active.exercises.reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0)}/${active.exercises.reduce((a,e)=>a+e.sets.length,0)} séries</p></div>
+    </div>
+    <div style="margin:10px 0 18px;height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden">
+      <div style="height:100%;width:${activePct()}%;background:linear-gradient(90deg,var(--primary),var(--primary-light));border-radius:99px;transition:width .4s"></div></div>
+    ${active.exercises.map((e,ei)=>{const ex=exById(e.exId);const done=e.sets.every(s=>s.done);
+      const prev=prevPerf(ex.n);
+      return `<div class="ex-block ${done?"done":""}">
+        <div class="ex-head"><div><div class="n">${esc(ex.n)}</div><div class="m">${ex.g} · ${ex.eq}</div></div>
+        <button class="icon-btn" style="width:30px;height:30px" data-action="ex-info" data-id="${ex.id}">ℹ️</button></div>
+        ${prev?`<div class="prev-hint">Última vez: ${prev}</div>`:""}
+        <div class="setrow tiny muted" style="margin-bottom:4px"><span></span><span style="text-align:center">REPS</span><span style="text-align:center">KG</span><span></span><span></span></div>
+        ${e.sets.map((s,si)=>`<div class="setrow">
+          <span class="sn">${si+1}</span>
+          <input type="number" inputmode="numeric" value="${s.reps}" data-set-input data-ei="${ei}" data-si="${si}" data-f="reps">
+          <input type="number" inputmode="decimal" value="${s.weight}" data-set-input data-ei="${ei}" data-si="${si}" data-f="weight">
+          <button class="checkbtn ${s.done?"on":""}" data-action="set-done" data-ei="${ei}" data-si="${si}">✓</button>
+          <button class="icon-btn" style="width:34px;height:34px" data-action="del-set-active" data-ei="${ei}" data-si="${si}">✕</button>
+        </div>`).join("")}
+        <button class="btn btn-ghost btn-xs" data-action="add-set-active" data-ei="${ei}" style="margin-top:4px">＋ Série</button>
+      </div>`;}).join("")}
+    <button class="btn btn-ghost btn-block" data-action="add-ex-active" style="margin-bottom:14px">＋ Adicionar exercício</button>
+    <button class="btn btn-primary btn-block" data-action="fin-workout" ${doneAll?"":'style="opacity:.6"'}>✔ Finalizar treino</button>
+    <button class="btn btn-danger btn-block" style="margin-top:10px" data-action="abort-workout">Descartar treino</button>
+  `;
+}
+function activePct(){const t=active.exercises.reduce((a,e)=>a+e.sets.length,0)||1;
+  return Math.round(active.exercises.reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0)/t*100);}
+function prevPerf(name){
+  for(const h of S.history.slice().reverse()){
+    const ex=h.exercises.find(e=>e.name===name);
+    if(ex)return ex.sets.map(s=>s.reps+"×"+s.weight).join(" · ");
+  }return null;
+}
+
+/* ---- SUMMARY ---- */
+let lastSummary=null;
+function viewSummary(){
+  const s=lastSummary;
+  $("#view").innerHTML=`
+    <div class="summary-hero">
+      <div class="bigcheck">✓</div>
+      <h1 class="page-title">Treino Concluído!</h1>
+      <p class="muted small">${esc(s.name)} · ${fmtDur(s.duration)}</p>
+    </div>
+    ${s.prs.length?`<div class="pr-banner">🏆 Novo(s) PR: ${s.prs.map(p=>esc(p)).join(" · ")}</div>`:""}
+    <div class="stats-grid">
+      <div class="stat"><div class="v">${s.sets}</div><div class="l">Séries</div></div>
+      <div class="stat"><div class="v">${s.reps}</div><div class="l">Reps totais</div></div>
+      <div class="stat"><div class="v">${s.volume.toLocaleString("pt-BR")}</div><div class="l">Volume (kg)</div></div>
+    </div>
+    <button class="btn btn-primary btn-block" data-action="nav" data-view="home">Concluir</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:10px" data-action="open-history">Ver histórico</button>
+  `;
+}
+
+/* ---- HISTORY ---- */
+function viewHistory(){
+  $("#view").innerHTML=`
+    <div class="row" style="margin-bottom:10px"><button class="icon-btn" data-action="nav" data-view="home">←</button>
+    <h1 class="page-title">Histórico</h1></div>
+    ${S.history.length?[...S.history].reverse().map(h=>histItem(h)).join(""):
+    '<div class="empty"><div class="ico">📋</div><p class="small">Nenhum treino registrado.</p></div>'}`;
+}
+
+/* ---- PROGRESS ---- */
+let progExId=null;
+function viewProgress(){
+  const exWithHist=[...new Set(S.history.flatMap(h=>h.exercises.map(e=>e.name)))];
+  if(progExId===null&&exWithHist.length)progExId=exWithHist[0];
+  let chartHtml="";
+  if(progExId){
+    const pts=[];
+    S.history.forEach(h=>{const ex=h.exercises.find(e=>e.name===progExId);
+      if(ex){const topW=Math.max(...ex.sets.map(s=>+s.weight||0));
+        pts.push({v:ex.sets.reduce((a,s)=>a+(+s.reps||0),0),label:fmtDate(h.date.slice(0,10)),full:h.date});}});
+    const best=pts.length?Math.max(...pts.map(p=>p.v)):0;
+    chartHtml=`<div class="card"><div class="card-title">Volume por sessão — ${esc(progExId)}</div>
+      <p class="tiny muted" style="margin-bottom:8px">Maior volume: ${best.toLocaleString("pt-BR")}</p>${lineChart(pts)}</div>`;
+  }
+  const volPts=S.history.slice(-12).map(h=>({v:h.volume,label:fmtDate(h.date.slice(0,10)),full:h.name+" · "+h.volume+"kg"}));
+  const prs=Object.entries(S.prs);
+  $("#view").innerHTML=`
+    <h1 class="page-title">Progresso</h1>
+    <p class="page-sub">Tendências de força, volume e recordes.</p>
+    ${exWithHist.length?`<div class="field"><label>Exercício</label>
+      <select class="input" data-action="prog-ex">${exWithHist.map(n=>'<option '+(n===progExId?"selected":"")+">"+esc(n)+"</option>").join("")}</select></div>`:
+      '<div class="empty"><div class="ico">📈</div><p class="small">Complete um treino para ver seus gráficos de progresso.</p></div>'}
+    ${chartHtml}
+    ${S.history.length?`<div class="card"><div class="card-title">Volume total (últimos ${volPts.length} treinos)</div>${barChart(volPts)}</div>`:""}
+    ${prs.length?`<div class="card"><div class="card-title">🏆 Recordes Pessoais</div>
+      ${prs.map(([n,p])=>'<div class="row-between" style="padding:9px 0;border-bottom:1px dashed var(--border)"><span style="font-weight:700;font-size:.86rem">'+esc(n)+'</span><span class="tag">'+p.w+" kg × "+p.reps+"</span></div>").join("")}</div>`:""}
+  `;
+}
+
+/* ---- MEASURES ---- */
+let measTab="Peso";
+function viewMeasures(){
+  const tabs=Object.keys(S.measures);
+  const m=S.measures[measTab];
+  const pts=m.data.slice(-14).map(d=>({v:d.v,label:fmtDate(d.d)}));
+  $("#view").innerHTML=`
+    <h1 class="page-title">Medidas</h1>
+    <p class="page-sub">Acompanhe peso, medidas e métricas personalizadas.</p>
+    <div class="chips-row">${tabs.map(t=>'<button class="chip '+(t===measTab?"on":"")+'" data-action="meas-tab" data-m="'+esc(t)+'">'+esc(t)+"</button>").join("")}
+      <button class="chip" data-action="meas-new">＋ Nova</button></div>
+    <div class="card">
+      <div class="card-title">${esc(measTab)} (${m.unit})</div>
+      ${lineChart(pts)}
+      <div class="row" style="margin-top:10px">
+        <input class="input" type="number" inputmode="decimal" step="0.1" id="measVal" placeholder="Valor (${m.unit})" style="flex:1">
+        <button class="btn btn-primary btn-sm" data-action="meas-add">＋ Registrar</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">Registros</div>
+      ${m.data.length?[...m.data].reverse().map((d,i)=>'<div class="row-between" style="padding:9px 0;border-bottom:1px dashed var(--border)"><span class="small">'+fmtDate(d.d)+" · "+new Date(d.d+"T12:00:00").toLocaleDateString("pt-BR",{year:"numeric"})+'</span><span class="row"><b>'+d.v+" "+m.unit+'</b><button class="btn btn-danger btn-xs" data-action="meas-del" data-m="'+esc(measTab)+'" data-i="'+(m.data.length-1-i)+'">✕</button></span></div>').join(""):
+      '<p class="muted small" style="padding:8px 0">Sem registros de '+esc(measTab)+" ainda.</p>"}
+    </div>`;
+}
+
+/* ---- IMPORT ---- */
+let importData=null;
+function viewImport(){
+  $("#view").innerHTML=`
+    <div class="empty" style="padding-top:60px"><div class="ico">🔗</div>
+    <h2 class="page-title">Treino compartilhado</h2>
+    <p class="small" style="margin:10px 0 20px">"${esc(importData.name)}" com ${importData.exercises.length} exercício(s).</p>
+    <button class="btn btn-primary btn-block" data-action="import-yes">Importar treino</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:10px" data-action="import-no">Ignorar</button></div>`;
+}
+
+/* ---------------- MODAL ---------------- */
+function openModal(html){
+  $("#modalRoot").innerHTML=`<div class="modal-bg" data-action="close-modal-bg"><div class="modal"><div class="grab"></div>${html}</div></div>`;
+}
+function closeModal(){$("#modalRoot").innerHTML="";}
+function exInfoModal(id){
+  const e=exById(id);
+  openModal(`<div class="row" style="margin-bottom:12px"><span class="ex-ico">${MUSCLE_ICONS[e.g]||"🏋️"}</span>
+    <div><h2 style="font-size:1.1rem;font-weight:800">${esc(e.n)}</h2>
+    <div class="row" style="gap:6px;margin-top:6px"><span class="tag">${e.g}</span><span class="tag tag-gray">${e.eq}</span></div></div></div>
+    <p class="small muted" style="margin-bottom:14px"><b style="color:var(--text)">Músculos:</b> ${e.g} · ${e.sec}</p>
+    ${GIFS[e.id]?'<img class="ex-media" loading="lazy" src="'+GIF_DIR+GIFS[e.id]+'" alt="'+esc(e.n)+'" onerror="this.remove()">':""}
+    <div class="field"><label style="color:var(--primary-light)">Como executar</label>
+    <p class="small" style="line-height:1.7;color:#cfcfe0">${e.how}</p></div>
+    ${active?'<button class="btn btn-primary btn-block" data-action="close-modal">Fechar</button>':""}
+  `);
+}
+
+/* ---------------- REST TIMER ---------------- */
+function startRest(secs){
+  restTotal=secs;restEnd=Date.now()+secs*1000;
+  $("#timerPill").classList.add("show");
+  clearInterval(restTimer);
+  restTimer=setInterval(()=>{
+    const left=Math.max(0,Math.round((restEnd-Date.now())/1000));
+    $("#timerTxt").textContent=fmtDur(left);
+    if(left<=0){clearInterval(restTimer);$("#timerPill").classList.remove("show");
+      if(navigator.vibrate)navigator.vibrate(200);}
+  },250);
+  $("#timerTxt").textContent=fmtDur(secs);
+}
+
+/* ---------------- SHARE ---------------- */
+function shareRoutine(id){
+  const r=S.routines.find(x=>x.id===id);if(!r)return;
+  const data={name:r.name,exercises:r.exercises.map(e=>({exId:e.exId,sets:e.sets,reps:e.reps,weight:e.weight,rest:e.rest}))};
+  const b64=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const link=location.origin+location.pathname+"#r="+b64;
+  openModal(`<h2 style="font-size:1.05rem;font-weight:800;margin-bottom:12px">🔗 Compartilhar treino</h2>
+    <p class="small muted" style="margin-bottom:12px">Envie este link — quem abrir no FORJA importa o treino com um toque.</p>
+    <input class="input" style="margin-bottom:12px" readonly value="${esc(link)}" id="shareOut">
+    <button class="btn btn-primary btn-block" data-action="copy-share">Copiar link</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:8px" data-action="close-modal">Fechar</button>`);
+}
+function tryImport(){
+  if(!location.hash.startsWith("#r="))return;
+  try{
+    const json=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3)))));
+    if(json&&json.name&&Array.isArray(json.exercises)){importData=json;nav("import");}
+  }catch(e){}
+  location.hash="";
+}
+
+/* ---------------- FINISH WORKOUT ---------------- */
+function finishWorkout(){
+  const duration=Math.floor((Date.now()-active.start)/1000);
+  const entry={id:uid2(),name:active.name,date:new Date().toISOString(),duration,
+    volume:active.exercises.reduce((a,e)=>a+volumeOf(e),0),
+    reps:active.exercises.reduce((a,e)=>a+e.sets.reduce((b,s)=>b+(+s.reps||0),0),0),
+    sets:active.exercises.reduce((a,e)=>a+e.sets.length,0),
+    exercises:active.exercises.map(e=>({name:exById(e.exId).n,sets:e.sets.map(s=>({reps:s.reps,weight:s.weight}))}))};
+  const newPRs=[];
+  entry.exercises.forEach(e=>{
+    const top=e.sets.reduce((b,s)=>(+s.weight||0)>(+b.weight||0)?s:b,e.sets[0]);
+    if(!top)return;
+    const cur=S.prs[e.name];
+    if(!cur||(+top.weight||0)>(+cur.w||0)||((+top.weight||0)===(+cur.w||0)&&(+top.reps||0)>(+cur.reps||0))){
+      S.prs[e.name]={w:+top.weight||0,reps:+top.reps||0};newPRs.push(e.name);}
+  });
+  S.history.push(entry);save();
+  lastSummary={...entry,prs:newPRs};
+  const wasActive=active;active=null;clearInterval(restTimer);$("#timerPill").classList.remove("show");
+  nav("summary");
+}
+
+/* ---------------- EVENTS ---------------- */
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-action]");if(!el)return;
+  const a=el.dataset.action,id=el.dataset.id;
+  if(a==="nav")nav(el.dataset.view);
+  if(a==="open-backup")openBackupModal();
+  if(a==="backup-export")exportBackup();
+  if(a==="backup-import-btn")$("#backupFileInput").click();
+  if(a==="goto-routines")nav("routines");
+  if(a==="new-routine"){editing={id:uid2(),name:"",exercises:[]};go("editor");}
+  if(a==="edit-routine"){const r=S.routines.find(x=>x.id===id);
+    editing={id:r.id,name:r.name,exercises:r.exercises.map(x=>({...x}))};go("editor");}
+  if(a==="del-routine"){if(confirm("Excluir este treino?")){S.routines=S.routines.filter(x=>x.id!==id);save();render();}}
+  if(a==="dup-routine"){const r=S.routines.find(x=>x.id===id);
+    S.routines.push({id:uid2(),name:r.name+" (cópia)",exercises:r.exercises.map(x=>({...x}))});save();render();toast("Treino duplicado");}
+  if(a==="share-routine")shareRoutine(id);
+  if(a==="copy-share"){const i=$("#shareOut");i.select();
+    navigator.clipboard?.writeText(i.value).catch(()=>document.execCommand("copy"));toast("Link copiado!");}
+  if(a==="close-modal")closeModal();
+  if(a==="close-modal-bg"&&e.target.classList.contains("modal-bg"))closeModal();
+  if(a==="start-routine"){const r=S.routines.find(x=>x.id===id);
+    active={name:r.name,start:Date.now(),exercises:r.exercises.map(x=>({exId:x.exId,
+      sets:Array.from({length:x.sets},()=>({reps:x.reps,weight:x.weight,done:false}))}))};
+    stack.length=0;cur={view:"active",params:null};render();toast("Treino iniciado. Bora! 🔥");}
+  if(a==="resume-active"){cur={view:"active",params:null};render();}
+  if(a==="add-ex"){pickerReturn=true;go("library");}
+  if(a==="add-ex-active"){pickerReturn="active";go("library");}
+  if(a==="pick-ex"){const exid=+el.dataset.id;
+    if(pickerReturn==="active"){active.exercises.push({exId:exid,sets:[{reps:10,weight:0,done:false}]});
+      pickerReturn=false;cur={view:"active",params:null};stack.pop();render();toast("Exercício adicionado");}
+    else{editing.exercises.push({exId:exid,sets:3,reps:10,weight:0,rest:90});
+      pickerReturn=false;cur={view:"editor",params:null};stack.pop();render();toast("Exercício adicionado");}}
+  if(a==="ex-info")exInfoModal(+el.dataset.id);
+  if(a==="ex-up"){const i=+el.dataset.i;[editing.exercises[i-1],editing.exercises[i]]=[editing.exercises[i],editing.exercises[i-1]];render();}
+  if(a==="ex-down"){const i=+el.dataset.i;[editing.exercises[i+1],editing.exercises[i]]=[editing.exercises[i],editing.exercises[i+1]];render();}
+  if(a==="ex-del"){editing.exercises.splice(+el.dataset.i,1);render();}
+  if(a==="cfg"){const it=editing.exercises[+el.dataset.i],f=el.dataset.f,d=parseFloat(el.dataset.d);
+    it[f]=Math.max(f==="sets"?1:0,(it[f]+d));render();}
+  if(a==="save-routine"){editing.name=$("#edName").value.trim()||"Treino sem nome";
+    const i=S.routines.findIndex(x=>x.id===editing.id);
+    if(i>=0)S.routines[i]=editing;else S.routines.push(editing);
+    save();editing=null;toast("Treino salvo ✔");nav("routines");}
+  if(a==="lib-filter"){libFilter=el.dataset.g;render();}
+  if(a==="set-done"){const ei=+el.dataset.ei,si=+el.dataset.si,s=active.exercises[ei].sets[si];
+    s.done=!s.done;
+    if(s.done){const orig=S.routines.flatMap(r=>r.exercises).find(x=>x.exId===active.exercises[ei].exId);
+      startRest(orig?orig.rest:90);}
+    render();}
+  if(a==="add-set-active"){const ei=+el.dataset.ei,last=active.exercises[ei].sets.at(-1);
+    active.exercises[ei].sets.push({reps:last.reps,weight:last.weight,done:false});render();}
+  if(a==="del-set-active"){active.exercises[+el.dataset.ei].sets.splice(+el.dataset.si,1);render();}
+  if(a==="timer-skip"){clearInterval(restTimer);$("#timerPill").classList.remove("show");}
+  if(a==="fin-workout")finishWorkout();
+  if(a==="abort-workout"){if(confirm("Descartar este treino? O progresso será perdido.")){active=null;clearInterval(restTimer);$("#timerPill").classList.remove("show");nav("home");}}
+  if(a==="open-history")nav("history");
+  if(a==="hist-del"){if(confirm("Excluir este registro?")){S.history=S.history.filter(h=>h.id!==id);save();render();}}
+  if(a==="prog-ex"){progExId=el.value;render();}
+  if(a==="meas-tab"){measTab=el.dataset.m;render();}
+  if(a==="meas-add"){const v=parseFloat($("#measVal").value);
+    if(isNaN(v))return toast("Digite um valor válido");
+    S.measures[measTab].data.push({d:new Date().toISOString().slice(0,10),v});save();render();toast("Registrado ✔");}
+  if(a==="meas-del"){S.measures[el.dataset.m].data.splice(+el.dataset.i,1);save();render();}
+  if(a==="meas-new"){const name=prompt("Nome da métrica (ex.: Braço, Quadrilha):");if(!name)return;
+    const unit=prompt("Unidade (ex.: cm, kg, %):")||"u";
+    S.measures[name]={unit,data:[]};measTab=name;save();render();}
+  if(a==="import-yes"){S.routines.push({id:uid2(),name:importData.name,exercises:importData.exercises});save();importData=null;toast("Treino importado ✔");nav("routines");}
+  if(a==="import-no"){importData=null;nav("home");}
+});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.matches("[data-set-input]")){
+    const ei=+t.dataset.ei,si=+t.dataset.si,f=t.dataset.f;
+    active.exercises[ei].sets[si][f]=parseFloat(t.value)||0;
+  }
+  if(t.hasAttribute("data-action-lib")&&t.dataset.actionLib==="search"){libSearch=t.value.toLowerCase();
+    clearTimeout(t._t);t._t=setTimeout(render,200);}
+});
+document.addEventListener("change",e=>{
+  const el=e.target.closest("[data-action]");
+  if(el&&el.dataset.action==="prog-ex"){progExId=el.value;render();}
+  if(e.target.id==="backupFileInput"&&e.target.files[0])importBackupFile(e.target.files[0]);
+});
+
+/* ---------------- BOOT ---------------- */
+tryImport();
+render();
+</script>
+</body>
+</html>
